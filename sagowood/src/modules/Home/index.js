@@ -17,6 +17,7 @@ import { navigations } from "./navigation";
 import { Link, useNavigate } from "react-router-dom";
 import PacmanLoader from "react-spinners/PacmanLoader";
 import PostCommentsModal from "../../pop-up/PostCommentsModal";
+import DarkMode from "../../components/DarkMode";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -285,9 +286,9 @@ const Home = () => {
   };
 
   return (
-    <div className="h-screen bg-[#d2cfdf] flex overflow-hidden">
+    <div className="h-screen  flex overflow-hidden">
       {/**trai */}
-      <div className="w-[20%] bg-white flex flex-col">
+      <div className="w-[20%]  flex flex-col">
         {loading ? (
           <div className="flex justify-center items-center h-[30%] border-b">
             <PacmanLoader />
@@ -348,8 +349,8 @@ const Home = () => {
         </div>
       </div>
       {/**giua */}
-      <div className="w-[60%] overflow-scroll h-full scrollbar-hide">
-        <div className=" bg-white h-[75px] border-l flex justify-evenly items-center pt-4 sticky top-0 shadow-lg">
+      <div className="w-[60%] overflow-auto h-full scrollbar-hide">
+      <div className="h-[75px] border-l flex justify-evenly items-center pt-4 sticky top-0 shadow-lg z-50 bg-white dark:bg-black">
           <div className="flex flex-row justify-center items-center mb-4">
             <img
               src={imgLogo}
@@ -362,7 +363,7 @@ const Home = () => {
             </div>
           </div>
           <div className="flex justify-center items-center">
-            <Input placeholder="Search on K7" className="rounded-full" />
+            <Input placeholder="Search on K7" className="rounded-full bg-white dark:bg-black" />
             <Button icon={<IconSearch />} className="mb-4 ml-4 rounded-full" />
           </div>
           <Button
@@ -371,6 +372,10 @@ const Home = () => {
             label="Create new post"
             className="rounded-full bg-green-400 hover:bg-green-600 mb-4 flex"
           />
+          {/*Darkmode switch */}
+          <div>
+            <DarkMode />
+          </div>
         </div>
         {loading ? (
           <div className="flex justify-center items-center h-[90%]">
@@ -398,7 +403,7 @@ const Home = () => {
                 saved.length > 0 && saved.includes(loggedInUserId);
 
               return (
-                <div className="bg-white w-[80%] mx-auto mt-8 p-8" key={_id}>
+                <div className=" w-[80%] mx-auto mt-8 p-8" key={_id}>
                   <div
                     className="border-b flex items-center pb-4 mb-4 cursor-pointer"
                     onClick={() =>
@@ -432,6 +437,18 @@ const Home = () => {
                       src={image || postImg}
                       className="object-cover w-full h-full rounded-lg"
                       alt="post"
+                      onClick={() =>
+                        handleOpenModal({
+                          _id,
+                          caption,
+                          description,
+                          image,
+                          user,
+                          likes,
+                          comments,
+                          saved,
+                        })
+                      }
                     />
                     <p className="my-4 text-sm font-normal">{description}</p>
                   </div>
@@ -457,7 +474,7 @@ const Home = () => {
                     <div className="flex flex-row justify-between items-center">
                       <textarea
                         rows={1}
-                        className="w-[80%] border p-4 resize-none mt-4"
+                        className="w-[80%] border p-4 resize-none mt-4 bg-white dark:bg-black"
                         placeholder="Add Comment..."
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
@@ -465,11 +482,11 @@ const Home = () => {
                       <Button
                         label="Add Comment"
                         onClick={() => handleCommentSubmit(_id, index)}
-                        className=" w-[20%] mt-4 p-4 rounded py-4"
-                      />
+                        className=" w-[20%] mt-4 p-4 rounded py-4 "
+                      /> 
                     </div>
                   </div>
-                  <div className="flex justify-evenly text-black text-sm font-medium">
+                  <div className="flex justify-evenly text-black dark:text-white text-sm font-medium">
                     <div
                       className="flex cursor-pointer items-center"
                       onClick={() =>
@@ -542,7 +559,7 @@ const Home = () => {
         />
       </div>
       {/**phai */}
-      <div className="w-[20%] bg-white flex flex-col items-center space-y-8 p-4">
+      <div className="w-[20%] flex flex-col items-center space-y-8 p-4">
         {/* Trending Feeds */}
         <div className="w-full max-w-[400px]">
           <h3 className="text-lg font-semibold mb-4">Trending Feeds</h3>

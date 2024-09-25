@@ -46,7 +46,7 @@ const Form = ({
   };
   return (
     <div className=" h-screen w-full flex justify-center items-center">
-      <div className="h-full w-[1400px] bg-white flex justify-center items-center border-4 border-black">
+      <div className="h-full w-[1400px]  flex justify-center items-center border-4 border-black">
         <div
           className={` h-full w-full flex flex-col justify-center items-center border-8 border-green-500 ${
             !isSignInPage && "order-2"

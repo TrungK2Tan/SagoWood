@@ -59,7 +59,7 @@ const PostCommentsModal = ({ isOpen, post, onClose, onCommentAdded }) => {
   };
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white w-[70%] h-[80%] p-8 rounded-lg shadow-lg flex overflow-hidden">
+      <div className="bg-white dark:bg-black w-[70%] h-[80%] p-8 rounded-lg shadow-lg flex overflow-hidden">
         {/* Left: Post details */}
         <div className="w-[50%] border-r pr-4">
           <img
@@ -114,8 +114,8 @@ const PostCommentsModal = ({ isOpen, post, onClose, onCommentAdded }) => {
             </div>
           </div>
           {/* Social Actions */}
-          <div className="flex justify-around items-center px-4 py-2 border-t bg-gray-100">
-            <div className="flex gap-4 text-gray-800 text-sm">
+          <div className="flex justify-around items-center px-4 py-2 border-t bg-gray-100  dark:bg-black">
+            <div className="flex gap-4 text-gray-800 dark:text-white text-sm">
               <div className="flex items-center cursor-pointer">
                 <IconHeart className="mr-2" />
                 {post.likes?.length} Likes
@@ -135,12 +135,12 @@ const PostCommentsModal = ({ isOpen, post, onClose, onCommentAdded }) => {
             </div>
           </div>
           {/* Add Comment */}
-          <div className="flex flex-row p-4 border-t bg-gray-50">
+          <div className="flex flex-row p-4 border-t bg-gray-50  dark:bg-black">
             <textarea
               rows={3}
               value={newComment}
               onChange={handleCommentChange}
-              className="w-[80%] border rounded-lg p-2 resize-none"
+              className="w-[80%] border rounded-lg p-2 resize-none  dark:bg-black"
               placeholder="Add Comment..."
             />
             <Button

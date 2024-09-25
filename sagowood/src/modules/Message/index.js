@@ -144,8 +144,8 @@ const Message = () => {
   };
 
   return (
-    <div className="w-screen flex h-screen bg-gray-100">
-      <div className="w-[5%] border-r h-full flex flex-col items-center justify-between bg-gray-200">
+    <div className="w-screen flex h-screen">
+      <div className="w-[5%] border-r h-full flex flex-col items-center justify-between">
         <div className="mt-4">
           <img
             src={user?.image || avt}
@@ -174,7 +174,7 @@ const Message = () => {
         </div>
       </div>
 
-      <div className="w-[25%] border-r h-full bg-white p-6">
+      <div className="w-[25%] border-r h-full p-6">
         <div className="flex justify-center items-center mb-6">
           <img
             src={user?.image || avt}
@@ -211,8 +211,8 @@ const Message = () => {
         </div>
       </div>
 
-      <div className="w-[70%] flex flex-col flex-1 h-full bg-gray-50">
-        <div className="w-full bg-white h-[80px] px-6 flex items-center justify-between shadow">
+      <div className="w-[70%] flex flex-col flex-1 h-full">
+        <div className="w-full h-[80px] px-6 flex items-center justify-between shadow">
           <div className="flex items-center cursor-pointer"   onClick={() => navigate(`/user/${selectedUser?.username}`)}>
             <img
               src={selectedUser?.image || avt}
@@ -247,12 +247,12 @@ const Message = () => {
           </div>
         </div>
 
-        <div className="w-full bg-white flex items-center p-4 border-t">
+        <div className="w-full  flex items-center p-4 border-t">
           <Input
             placeholder="Type a message..."
             value={message}
             onChange={handleInputChange}
-            className="flex-1 mr-4 w-[1200px]"
+            className="flex-1 mr-4 w-[1200px] dark:bg-black"
           />
           <IconBrandTelegram
 

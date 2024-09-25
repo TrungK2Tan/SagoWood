@@ -61,7 +61,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg w-96">
+      <div className="bg-white dark:bg-black p-6 rounded-lg w-96">
         <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
         <label className="block mb-2">
           UserName
@@ -69,7 +69,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
             type="text"
             value={user.username||"Username"}
             onChange={(e) => setUsername(e.target.value)}
-            className="block w-full p-2 border rounded"
+            className="block w-full p-2 border rounded dark:text-white dark:bg-black"
           />
         </label>
         <label className="block mb-2">
@@ -78,7 +78,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
             type="email"
             value={user.email||"Email"}
             onChange={(e) => setEmail(e.target.value)}
-            className="block w-full p-2 border rounded"
+            className="block w-full p-2 border rounded dark:text-white dark:bg-black"
           />
         </label>
         <Input

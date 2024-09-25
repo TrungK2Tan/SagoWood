@@ -115,8 +115,8 @@ const People = () => {
     );
 
   return (
-    <div className="h-screen bg-[#d2cfdf] flex overflow-hidden">
-      <div className="pt-4 w-[20%] bg-white flex flex-col">
+    <div className="h-screen flex overflow-hidden">
+      <div className="pt-4 w-[20%] flex flex-col">
         <div className="h-[30%] flex justify-center items-center border-b">
           <div className="flex flex-col justify-center items-center">
             <img
@@ -244,7 +244,7 @@ const People = () => {
                 }) => (
                   <div
                     key={_id}
-                    className="relative w-[400px] mt-6 mx-2 flex flex-col border p-4 rounded-lg bg-white group"
+                    className="relative w-[400px] mt-6 mx-2 flex flex-col border p-4 rounded-lg bg-white dark:bg-black group"
                     onClick={() =>
                       handleOpenModal({
                         _id,
