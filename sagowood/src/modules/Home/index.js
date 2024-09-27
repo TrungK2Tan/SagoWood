@@ -12,6 +12,10 @@ import {
   IconBookmark,
   IconSearch,
   IconLogout,
+  IconMoodAngry,
+  IconMoodHappy,
+  IconMoodSad,
+  IconThumbUp,
 } from "@tabler/icons-react";
 import { navigations } from "./navigation";
 import { Link, useNavigate } from "react-router-dom";
@@ -35,6 +39,121 @@ const Home = () => {
   const [suggestions, setSuggestions] = useState([]); // New state for suggestions
   //lay danh sach nguoi dung da follow
   const [activeFollowers, setActiveFollowers] = useState([]); // New state for active followers
+  const [isDropdownVisible, setDropdownVisible] = useState(false);
+  const [postReactions, setPostReactions] = useState({});
+  const toggleDropdown = () => {
+    setDropdownVisible((prev) => !prev); // Update this line
+  };
+  const handleReactionClick = async (id, reactionType) => {
+    const currentReaction = postReactions[id]; // Get the current reaction for the specific post
+  
+    try {
+      // Set URLs for API
+      const removeUrl = "http://localhost:8000/api/remove-reaction";
+      const reactUrl = "http://localhost:8000/api/react";
+      const fetchPostUrl = `http://localhost:8000/api/posts/${id}`; // URL to fetch the post
+  
+      // If the user clicks on the same type of reaction, remove the current reaction
+      if (currentReaction === reactionType) {
+        // Remove the reaction
+        await updateReaction(removeUrl, id, currentReaction); // Call function to remove the reaction
+        setPostReactions((prev) => ({ ...prev, [id]: null })); // Update state to remove the reaction
+        
+        // Fetch the updated post data
+        const response = await fetch(fetchPostUrl, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("user:token")}`,
+          },
+        });
+  
+        if (!response.ok) {
+          const errorMessage = await response.text();
+          console.error("Failed to fetch post after removing reaction:", errorMessage);
+          throw new Error("Failed to fetch post after removing reaction");
+        }
+  
+        const updatedPost = await response.json();
+  
+        // Update data based on the response
+        setData((prevData) =>
+          prevData.map((post) =>
+            post._id === updatedPost._id ? updatedPost : post
+          )
+        );
+  
+      } else {
+        // If there is a current reaction, remove that reaction first
+        if (currentReaction) {
+          await updateReaction(removeUrl, id, currentReaction); // Remove the current reaction
+        }
+  
+        // Set the new reaction in state
+        setPostReactions((prev) => ({ ...prev, [id]: reactionType }));
+  
+        const response = await fetch(reactUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("user:token")}`,
+          },
+          body: JSON.stringify({ id, reactionType }),
+        });
+  
+        if (!response.ok) {
+          const errorMessage = await response.text();
+          console.error("Failed to update post reaction:", errorMessage);
+          throw new Error("Failed to update post reaction");
+        }
+  
+        const { updatedPost } = await response.json();
+  
+        // Update data based on the response
+        setData((prevData) =>
+          prevData.map((post) =>
+            post._id === updatedPost._id ? updatedPost : post
+          )
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  // Hàm để xử lý việc cập nhật phản ứng
+  const updateReaction = async (url, id, reactionType) => {
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("user:token")}`,
+      },
+      body: JSON.stringify({ id, reactionType }),
+    });
+
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      console.error(`Failed to update reaction: ${reactionType}`, errorMessage);
+      throw new Error(`Failed to update reaction: ${reactionType}`);
+    }
+  };
+
+  const getReactionIcon = (reactionType) => {
+    switch (reactionType) {
+      case "like":
+        return <IconThumbUp className="text-blue-500" />;
+      case "love":
+        return <IconMoodHappy className="text-yellow-500" />;
+      case "haha":
+        return <IconMoodHappy className="text-green-500" />;
+      case "angry":
+        return <IconMoodAngry className="text-red-600" />;
+      case "sad":
+        return <IconMoodSad className="text-purple-500" />;
+      case "default":
+        return <IconThumbUp className="text-black" />;
+    }
+  };
+
   const handleOpenModal = (post) => {
     setSelectedPost(post);
     setIsModalOpen(true);
@@ -84,20 +203,20 @@ const Home = () => {
         if (!responseTrendingPosts.ok)
           throw new Error("Failed to fetch trending posts");
         const data = await responseTrendingPosts.json();
-        const postsWithLikes = data.posts.filter(
-          (post) => post.likes.length > 0
+        const postsWithreactions = data.posts.filter(
+          (post) => post.reactions.length > 0
         );
         const postsWithComments = data.posts.filter(
           (post) => post.comments.length > 0
         );
-        const sortedByLikes = postsWithLikes.sort(
-          (a, b) => b.likes.length - a.likes.length
+        const sortedByreactions = postsWithreactions.sort(
+          (a, b) => b.reactions.length - a.reactions.length
         );
         const sortedByComments = postsWithComments.sort(
           (a, b) => b.comments.length - a.comments.length
         );
         const topPosts = [
-          ...(sortedByLikes.length > 0 ? [sortedByLikes[0]] : []),
+          ...(sortedByreactions.length > 0 ? [sortedByreactions[0]] : []),
           ...(sortedByComments.length > 0 ? [sortedByComments[0]] : []),
         ];
         if (topPosts.length > 0) {
@@ -205,33 +324,8 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const {
-    _id: loggedInUserId = "",
-    username = "",
-    email = "",
-  } = user || {};
+  const { _id: loggedInUserId = "", username = "", email = "" } = user || {};
 
-  const handleReaction = async (_id, index, reaction = "like") => {
-    try {
-      const response = await fetch(`http://localhost:8000/api/${reaction}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("user:token")}`,
-        },
-        body: JSON.stringify({ id: _id }),
-      });
-      if (!response.ok) throw new Error("Failed to update post reaction");
-      const { updatedPost } = await response.json();
-      const updatePost = data.map((post, i) => {
-        if (i === index) return updatedPost;
-        else return post;
-      });
-      setData(updatePost);
-    } catch (error) {
-      console.log(error);
-    }
-  };
   const handleReactionSave = async (_id, index, reaction = "save") => {
     try {
       const response = await fetch(`http://localhost:8000/api/${reaction}`, {
@@ -350,7 +444,7 @@ const Home = () => {
       </div>
       {/**giua */}
       <div className="w-[60%] overflow-auto h-full scrollbar-hide">
-      <div className="h-[75px] border-l flex justify-evenly items-center pt-4 sticky top-0 shadow-lg z-50 bg-white dark:bg-black">
+        <div className="h-[75px] border-l flex justify-evenly items-center pt-4 sticky top-0 shadow-lg z-50 bg-white dark:bg-black">
           <div className="flex flex-row justify-center items-center mb-4">
             <img
               src={imgLogo}
@@ -363,7 +457,10 @@ const Home = () => {
             </div>
           </div>
           <div className="flex justify-center items-center">
-            <Input placeholder="Search on K7" className="rounded-full bg-white dark:bg-black" />
+            <Input
+              placeholder="Search on K7"
+              className="rounded-full bg-white dark:bg-black"
+            />
             <Button icon={<IconSearch />} className="mb-4 ml-4 rounded-full" />
           </div>
           <Button
@@ -390,15 +487,13 @@ const Home = () => {
                 description = "",
                 image = "",
                 user = {},
-                likes = [],
+                reactions = [],
                 comments = [],
                 saved = [],
                 // Đây phải là một mảng của các đối tượng comment
               },
               index
             ) => {
-              const isAlreadyLiked =
-                likes.length > 0 && likes.includes(loggedInUserId);
               const isAlreadySaved =
                 saved.length > 0 && saved.includes(loggedInUserId);
 
@@ -444,7 +539,7 @@ const Home = () => {
                           description,
                           image,
                           user,
-                          likes,
+                          reactions,
                           comments,
                           saved,
                         })
@@ -453,24 +548,45 @@ const Home = () => {
                     <p className="my-4 text-sm font-normal">{description}</p>
                   </div>
                   <div className="flex flex-col pb-4 mb-4">
-                    <a
-                      className="cursor-pointer"
-                      onClick={() =>
-                        handleOpenModal({
-                          _id,
-                          caption,
-                          description,
-                          image,
-                          user,
-                          likes,
-                          comments,
-                          saved,
-                        })
-                      }
-                    >
-                      View All {comments?.length} Comments
-                    </a>
+                    <div className="flex flex-row justify-around">
+                      <div className="flex flex-row cursor-pointer">
+                        {Object.entries(
+                          reactions.reduce((acc, reaction) => {
+                            // Nếu loại phản ứng đã tồn tại trong acc, tăng số lượng, nếu không thì khởi tạo số lượng là 1
+                            acc[reaction.type] = (acc[reaction.type] || 0) + 1;
+                            return acc;
+                          }, {})
+                        ).map(([type, count]) => (
+                          <div
+                            key={type}
+                            className="flex flex-row items-center mr-2"
+                          >
+                            {getReactionIcon(type)}
+                            {/* Hiển thị số lượng phản ứng bên cạnh biểu tượng */}
+                            <span className="ml-1">{count}</span>
+                          </div>
+                        ))}
+                        Reactions
+                      </div>
 
+                      <a
+                        className=" cursor-pointer"
+                        onClick={() =>
+                          handleOpenModal({
+                            _id,
+                            caption,
+                            description,
+                            image,
+                            user,
+                            reactions,
+                            comments,
+                            saved,
+                          })
+                        }
+                      >
+                        View All {comments?.length} Comments
+                      </a>
+                    </div>
                     <div className="flex flex-row justify-between items-center">
                       <textarea
                         rows={1}
@@ -483,26 +599,96 @@ const Home = () => {
                         label="Add Comment"
                         onClick={() => handleCommentSubmit(_id, index)}
                         className=" w-[20%] mt-4 p-4 rounded py-4 "
-                      /> 
+                      />
                     </div>
                   </div>
                   <div className="flex justify-evenly text-black dark:text-white text-sm font-medium">
-                    <div
-                      className="flex cursor-pointer items-center"
-                      onClick={() =>
-                        isAlreadyLiked
-                          ? handleReaction(_id, index, "dislike")
-                          : handleReaction(_id, index, "like")
-                      }
-                    >
-                      <span className="mr-2">
-                        <IconHeart
-                          fill={isAlreadyLiked ? "red" : "white"}
-                          color={isAlreadyLiked ? "red" : "black"}
-                        />
-                      </span>
-                      {likes?.length} Likes
+                    <div className="flex cursor-pointer items-center relative group">
+                      <div className="flex items-center mr-2">
+                        <span className="mr-1">
+                          {/* Kiểm tra xem người dùng đã phản ứng hay chưa */}
+                          {reactions && reactions.length > 0
+                            ? // Nếu có phản ứng, hiển thị biểu tượng phản ứng của người dùng
+                              getReactionIcon(
+                                reactions.find(
+                                  (reaction) => reaction.user === loggedInUserId
+                                )?.type || "default" // Nếu không tìm thấy, hiển thị biểu tượng mặc định
+                              )
+                            : // Nếu chưa có phản ứng, hiển thị biểu tượng mặc định
+                              getReactionIcon("default")}
+                        </span>
+                      </div>
+                      {/* Dropdown Menu for Reactions */}
+                      <div
+                        className={`dark:text-white dark:bg-black absolute left-0 z-10 bg-white border rounded shadow-lg transition-opacity duration-200 ease-in-out transform ${
+                          isDropdownVisible
+                            ? "opacity-100 translate-y-0"
+                            : "opacity-0 translate-y-1"
+                        } group-hover:opacity-100 group-hover:translate-y-0`}
+                        style={{
+                          top: "-200%",
+                          marginBottom: "5px",
+                          whiteSpace: "nowrap",
+                        }} // Thêm whiteSpace để ngăn cách dòng
+                      >
+                        {/* Reaction options */}
+                        <div className="flex space-x-2">
+                          {" "}
+                          {/* Sử dụng flex và space-x để bố trí ngang */}
+                          <div
+                            onClick={() => {
+                              handleReactionClick(_id, "like");
+                              setDropdownVisible(false);
+                            }}
+                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                          >
+                            <IconThumbUp className="text-blue-500" />
+                            <span className="ml-2">Like</span>
+                          </div>
+                          <div
+                            onClick={() => {
+                              handleReactionClick(_id, "love");
+                              setDropdownVisible(false);
+                            }}
+                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                          >
+                            <IconMoodHappy className="text-yellow-500" />
+                            <span className="ml-2">Love</span>
+                          </div>
+                          <div
+                            onClick={() => {
+                              handleReactionClick(_id, "haha");
+                              setDropdownVisible(false);
+                            }}
+                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                          >
+                            <IconMoodHappy className="text-green-500" />
+                            <span className="ml-2">Haha</span>
+                          </div>
+                          <div
+                            onClick={() => {
+                              handleReactionClick(_id, "angry");
+                              setDropdownVisible(false);
+                            }}
+                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                          >
+                            <IconMoodAngry className="text-red-600" />
+                            <span className="ml-2">Angry</span>
+                          </div>
+                          <div
+                            onClick={() => {
+                              handleReactionClick(_id, "sad");
+                              setDropdownVisible(false);
+                            }}
+                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                          >
+                            <IconMoodSad className="text-purple-500" />
+                            <span className="ml-2">Sad</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
                     <div
                       className="flex cursor-pointer items-center"
                       onClick={() =>
@@ -512,7 +698,7 @@ const Home = () => {
                           description,
                           image,
                           user,
-                          likes,
+                          reactions,
                           comments,
                           saved,
                         })

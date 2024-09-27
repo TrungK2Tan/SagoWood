@@ -249,6 +249,25 @@ app.get("/api/posts", authenticate, async (req, res) => {
     res.status(500).send(error);
   }
 });
+// Hiển thị một bài viết cụ thể theo ID
+app.get("/api/posts/:id", authenticate, async (req, res) => {
+  try {
+    const { id } = req.params; // Lấy ID từ URL
+    const post = await Posts.findById(id) // Tìm bài viết theo ID
+      .populate("user", "_id username email image") // Thêm thông tin người dùng
+      .populate("comments.user", "_id username image"); // Thêm thông tin người dùng cho các bình luận
+
+    // Kiểm tra nếu bài viết không tồn tại
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    res.status(200).json(post); // Trả về bài viết
+  } catch (error) {
+    res.status(500).send(error); // Trả về lỗi nếu có
+  }
+});
+
 //comment cho bai viet
 app.put("/api/posts/:id/comment", authenticate, async (req, res) => {
   try {
@@ -307,52 +326,84 @@ app.post("/api/unfollow", authenticate, async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-//xu ly like bai viet
-app.put("/api/like", authenticate, async (req, res) => {
+// Handle adding or updating a reaction to a post
+app.put("/api/react", authenticate, async (req, res) => {
   try {
-    const { id } = req.body;
-    const { user } = req;
-    if (!id) return res.status(400).send("Id cannot be empty");
+    const { id, reactionType } = req.body;
+    console.log("Received ID:", id, "Reaction Type:", reactionType);
+    
+    if (!id || !reactionType) {
+      return res.status(400).send("Id and reaction type cannot be empty");
+    }
+
+    const validReactions = ["like", "love", "haha", "angry", "sad"];
+    if (!validReactions.includes(reactionType)) {
+      return res.status(400).send("Invalid reaction type");
+    }
+
+    const existingReaction = await Posts.findOne({
+      _id: id,
+      "reactions.user": req.user._id,
+      "reactions.type": reactionType,
+    });
+
+    if (existingReaction) {
+      return res.status(400).send("You have already reacted with this type");
+    }
+
+    await Posts.findOneAndUpdate(
+      { _id: id },
+      { $pull: { reactions: { user: req.user._id } } },
+      { new: true }
+    );
 
     const updatedPost = await Posts.findOneAndUpdate(
       { _id: id },
       {
-        $push: { likes: user._id },
+        $push: { reactions: { user: req.user._id, type: reactionType, date: new Date() } },
       },
       { returnDocument: "after" }
     )
       .populate("user", "_id username email image")
       .populate("comments.user", "_id username image");
 
-    // await followUser.save()
     res.status(200).json({ updatedPost });
   } catch (error) {
+    console.error("Error handling reaction:", error);
     res.status(500).send("Internal Server Error");
   }
 });
-//xu ly unlike bai viet
-app.put("/api/dislike", authenticate, async (req, res) => {
-  try {
-    const { id } = req.body;
-    const { user } = req;
-    if (!id) return res.status(400).send("Id cannot be empty");
 
+// Handle removing a reaction from a post
+app.put("/api/remove-reaction", authenticate, async (req, res) => {
+  try {
+    const { id, reactionType } = req.body;
+    const { user } = req;
+    if (!id || !reactionType) return res.status(400).send("Id and reaction type cannot be empty");
+
+    // Ensure the reaction type is valid
+    const validReactions = ["like", "love", "haha", "angry", "sad"];
+    if (!validReactions.includes(reactionType)) {
+      return res.status(400).send("Invalid reaction type");
+    }
+
+    // Remove the reaction based on user and reaction type
     const updatedPost = await Posts.findOneAndUpdate(
       { _id: id },
-      {
-        $pull: { likes: user._id },
-      },
+      { $pull: { reactions: { user: user._id, type: reactionType } } },
       { returnDocument: "after" }
     )
       .populate("user", "_id username email image")
       .populate("comments.user", "_id username image");
 
-    // await followUser.save()
     res.status(200).json({ updatedPost });
   } catch (error) {
+    console.error("Error removing reaction:", error);
     res.status(500).send("Internal Server Error");
   }
 });
+
+
 //xu ly save bai viet
 app.put("/api/save", authenticate, async (req, res) => {
   try {

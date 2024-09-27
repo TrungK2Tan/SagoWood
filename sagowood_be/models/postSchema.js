@@ -19,10 +19,22 @@ const postSchema = new mongoose.Schema({
     ref: "User", // Reference to the User model
     required: true,
   },
-  likes: [
+  reactions: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Assuming likes should also reference User
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User", // Reference to User model
+        required: true,
+      },
+      type: {
+        type: String,
+        enum: ["like", "love", "haha", "angry", "sad"], // Define the types of reactions allowed
+        required: true,
+      },
+      date: {
+        type: Date,
+        default: Date.now,
+      },
     },
   ],
   comments: [

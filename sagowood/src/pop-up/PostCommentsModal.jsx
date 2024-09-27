@@ -118,7 +118,7 @@ const PostCommentsModal = ({ isOpen, post, onClose, onCommentAdded }) => {
             <div className="flex gap-4 text-gray-800 dark:text-white text-sm">
               <div className="flex items-center cursor-pointer">
                 <IconHeart className="mr-2" />
-                {post.likes?.length} Likes
+                {post.reactions?.length} 
               </div>
               <div className="flex items-center cursor-pointer">
                 <IconMessageCircle className="mr-2" />
