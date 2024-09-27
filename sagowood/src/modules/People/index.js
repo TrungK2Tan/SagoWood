@@ -238,7 +238,7 @@ const People = () => {
                   caption = "",
                   description = "",
                   image = "",
-                  likes = [],
+                  reactions = [],
                   comments = [],
                   saved=[]
                 }) => (
@@ -252,7 +252,7 @@ const People = () => {
                         description,
                         image,
                         user,
-                        likes,
+                        reactions,
                         comments,
                         saved
                       })
@@ -275,7 +275,7 @@ const People = () => {
                           <span className="mr-2">
                             <IconHeart />
                           </span>
-                          {likes?.length}
+                          {reactions?.length}
                         </div>
                         <div className="flex items-center">
                           <span className="mr-2">

@@ -272,7 +272,7 @@ const Profile = () => {
                   caption = "",
                   description = "",
                   image = "",
-                  likes = [],
+                  reactions = [],
                   comments = [],
                   saved = [],
                 }) => (
@@ -286,7 +286,7 @@ const Profile = () => {
                         description,
                         image,
                         user,
-                        likes,
+                        reactions,
                         comments,
                         saved,
                       })
@@ -309,7 +309,7 @@ const Profile = () => {
                           <span className="mr-2">
                             <IconHeart />
                           </span>
-                          {likes?.length}
+                          {reactions?.length}
                         </div>
                         <div className="flex items-center">
                           <span className="mr-2">
@@ -343,7 +343,7 @@ const Profile = () => {
                   description = "",
                   image = "",
                   user = {},
-                  likes = [],
+                  reactions = [],
                   comments = [],
                   saved = [],
                 }) => (
@@ -357,7 +357,7 @@ const Profile = () => {
                         description,
                         image,
                         user,
-                        likes,
+                        reactions,
                         comments,
                         saved,
                       })
@@ -380,7 +380,7 @@ const Profile = () => {
                           <span className="mr-2">
                             <IconHeart />
                           </span>
-                          {likes?.length}
+                          {reactions?.length}
                         </div>
                         <div className="flex items-center">
                           <span className="mr-2">
