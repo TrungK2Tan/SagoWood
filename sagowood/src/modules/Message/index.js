@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
 import avt from "../../assets/avt.jpg";
-import { IconBrandTelegram, IconLogout, IconPhoneCall } from "@tabler/icons-react";
+import {
+  IconBrandTelegram,
+  IconLogout,
+  IconPhoneCall,
+} from "@tabler/icons-react";
 import { navigations } from "../Home/navigation";
 import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/input";
-import io from 'socket.io-client';
+import io from "socket.io-client";
+import Picker from "emoji-picker-react"; // Import the emoji picker
 
 // Replace with your server URL
 const SERVER_URL = "http://localhost:8000";
@@ -18,6 +23,7 @@ const Message = () => {
   const [messages, setMessages] = useState([]);
   const [socket, setSocket] = useState(null);
   const [conversationId, setConversationId] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     const userDetails = JSON.parse(localStorage.getItem("user:detail"));
@@ -47,20 +53,24 @@ const Message = () => {
     };
 
     fetchFollowingUsers();
+  }, []);
 
-    const newSocket = io(SERVER_URL, {
-      query: { userId: user._id },
-    });
-    setSocket(newSocket);
+  useEffect(() => {
+    if (user._id) {
+      const newSocket = io(SERVER_URL, {
+        query: { userId: user._id },
+      });
+      setSocket(newSocket);
 
-    return () => {
-      newSocket.disconnect();
-    };
+      return () => {
+        newSocket.disconnect();
+      };
+    }
   }, [user._id]);
 
   useEffect(() => {
     if (socket) {
-      socket.on('message', (message) => {
+      socket.on("message", (message) => {
         console.log("Received message:", message);
         if (message.conversationId === conversationId) {
           setMessages((prevMessages) => [...prevMessages, message]);
@@ -68,7 +78,7 @@ const Message = () => {
       });
 
       return () => {
-        socket.off('message');
+        socket.off("message");
       };
     }
   }, [socket, conversationId]);
@@ -78,8 +88,6 @@ const Message = () => {
     localStorage.removeItem("user:detail");
     navigate("/account/signin");
   };
-
-  const { _id: loggedInUserId = "" } = user || {};
 
   const handleInputChange = (e) => {
     setMessage(e.target.value);
@@ -96,7 +104,7 @@ const Message = () => {
           Authorization: `Bearer ${localStorage.getItem("user:token")}`,
         },
         body: JSON.stringify({
-          senderId: loggedInUserId,
+          senderId: user._id,
           receiverId: user._id,
         }),
       });
@@ -105,22 +113,31 @@ const Message = () => {
         const { conversationId } = await response.json();
         setConversationId(conversationId);
 
-        const messagesResponse = await fetch(`http://localhost:8000/api/messages/${conversationId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("user:token")}`,
-          },
-        });
+        const messagesResponse = await fetch(
+          `http://localhost:8000/api/messages/${conversationId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("user:token")}`,
+            },
+          }
+        );
 
         if (messagesResponse.ok) {
           const data = await messagesResponse.json();
           setMessages(data);
         } else {
-          console.error("Failed to fetch messages:", messagesResponse.statusText);
+          console.error(
+            "Failed to fetch messages:",
+            messagesResponse.statusText
+          );
         }
       } else {
-        console.error("Failed to create or retrieve conversation:", response.statusText);
+        console.error(
+          "Failed to create or retrieve conversation:",
+          response.statusText
+        );
       }
     } catch (error) {
       console.error("Error handling user click:", error);
@@ -131,20 +148,29 @@ const Message = () => {
     if (message.trim() && selectedUser && conversationId) {
       const newMessage = {
         conversationId,
-        senderId: loggedInUserId,
+        senderId: user._id,
         receiverId: selectedUser._id,
         message: message.trim(),
       };
 
-      socket.emit('message', newMessage);
+      // Emit message to socket
+      socket.emit("message", newMessage);
 
+      // Optionally store the message locally (in messages state)
       setMessages((prevMessages) => [...prevMessages, newMessage]);
-      setMessage("");
+      setMessage(""); // Clear the input after sending
     }
+  };
+
+  const onEmojiClick = (emojiObject) => {
+    // Append the emoji's symbol to the current message
+    setMessage((prevMessage) => prevMessage + emojiObject.emoji);
+    setShowEmojiPicker(false); // Close the emoji picker after selecting
   };
 
   return (
     <div className="w-screen flex h-screen">
+      {/* Sidebar */}
       <div className="w-[5%] border-r h-full flex flex-col items-center justify-between">
         <div className="mt-4">
           <img
@@ -174,6 +200,7 @@ const Message = () => {
         </div>
       </div>
 
+      {/* Following Users List */}
       <div className="w-[25%] border-r h-full p-6">
         <div className="flex justify-center items-center mb-6">
           <img
@@ -211,54 +238,80 @@ const Message = () => {
         </div>
       </div>
 
+      {/* Chat Section */}
       <div className="w-[70%] flex flex-col flex-1 h-full">
+        {/* Chat Header */}
         <div className="w-full h-[80px] px-6 flex items-center justify-between shadow">
-          <div className="flex items-center cursor-pointer"   onClick={() => navigate(`/user/${selectedUser?.username}`)}>
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={() => navigate(`/user/${selectedUser?.username}`)}
+          >
             <img
               src={selectedUser?.image || avt}
               alt="User Avatar"
               className="w-[50px] h-[50px] rounded-full"
             />
             <div className="ml-4">
-              <h3 className="text-lg font-semibold">{selectedUser?.username || "Select a user"}</h3>
-              <p className="text-sm text-gray-500">{selectedUser ? "Online" : ""}</p>
+              <h3 className="text-lg font-semibold">
+                {selectedUser?.username || "Select a user"}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {selectedUser ? "Online" : ""}
+              </p>
             </div>
           </div>
           <div className="flex items-center space-x-4 text-gray-500">
-            <IconPhoneCall className="cursor-pointer" />
+            <IconPhoneCall />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="space-y-4">
-            {messages.map((msg, index) => (
+        {/* Chat Messages */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                msg.senderId === user._id ? "justify-end" : "justify-start"
+              } mb-4`}
+            >
               <div
-                key={index}
-                className={`p-4 mb-6 break-words max-w-fit w-[60%] ${
-                  msg.senderId === loggedInUserId
-                    ? 'ml-auto bg-green-500 rounded-b-xl rounded-tl-xl text-white text-right'
-                    : 'bg-gray-300 rounded-b-xl rounded-tr-xl text-gray-700'
+                className={`max-w-[60%] p-4 rounded-lg ${
+                  msg.senderId === user._id
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-800"
                 }`}
               >
-                <p>{msg.message}</p>
-                <small className="text-xs text-gray-400">{new Date(msg.timestamp).toLocaleTimeString()}</small>
+                {msg.message}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
-        <div className="w-full  flex items-center p-4 border-t">
+        {/* Message Input */}
+        <div className="w-full px-6 py-4 flex items-center border-t">
+          <button
+            onClick={() => setShowEmojiPicker((prev) => !prev)}
+            className="mr-4"
+          >
+            🙂
+          </button>
+          {showEmojiPicker && (
+            <div className="absolute bottom-16 left-12 z-50">
+              <Picker onEmojiClick={onEmojiClick} />
+            </div>
+          )}
           <Input
-            placeholder="Type a message..."
             value={message}
             onChange={handleInputChange}
-            className="flex-1 mr-4 w-[1200px] dark:bg-black"
+            placeholder="Type a message..."
+            className="flex-1"
           />
-          <IconBrandTelegram
-
+          <button
             onClick={handleSendMessage}
-            className="mb-4 cursor-pointer"
-          />
+            className="ml-4 bg-green-500 text-white px-6 py-2 rounded-lg"
+          >
+            <IconBrandTelegram />
+          </button>
         </div>
       </div>
     </div>

@@ -150,7 +150,7 @@ const Home = () => {
       case "sad":
         return <IconMoodSad className="text-purple-500" />;
       case "default":
-        return <IconThumbUp className="text-black" />;
+        return <IconThumbUp className="text-black  dark:text-white" />;
     }
   };
 

@@ -9,6 +9,7 @@ const Input =({
     placeholder = '',
     value = '',
     onChange = () =>null,
+    onKeyDown,
     isRequired = true
 }) =>{
     return(
@@ -20,7 +21,7 @@ const Input =({
                 </label>
             }
             <input className={`shadow appearance-none border  w-full py-2 px-3 text-gray-700 leading-tight  focus:outline-none focus:shadow-outline ${className}`} id={name}
-            value={value} onChange={onChange} type={type} placeholder={placeholder} required={isRequired}/>
+            value={value} onChange={onChange} onKeyDown={onKeyDown} type={type} placeholder={placeholder} required={isRequired}/>
         </div>
     )
 }
