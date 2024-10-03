@@ -65,7 +65,7 @@ const Message = require("./models/messageSchema");
 
 // Middleware to handle JSON and URL-encoded data
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: "http://localhost:3000", // Change to the correct URL or use "*"
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
 };
@@ -268,6 +268,36 @@ app.get("/api/posts/:id", authenticate, async (req, res) => {
   }
 });
 
+// Delete Post
+app.delete("/api/posts/:id", authenticate, async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const { user } = req;
+
+    // Find the post by ID
+    const post = await Posts.findById(postId);
+
+    // Check if the post exists
+    if (!post) {
+      return res.status(404).json({ msg: "Post not found" });
+    }
+
+    // Check if the user is the owner of the post
+    if (!post.user.equals(user._id)) {
+      return res
+        .status(403)
+        .json({ msg: "Not authorized to delete this post" });
+    }
+
+    await Posts.findByIdAndDelete(postId); // Delete the post
+
+    res.status(200).json({ msg: "Post deleted successfully" });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Server error");
+  }
+});
+
 //comment cho bai viet
 app.put("/api/posts/:id/comment", authenticate, async (req, res) => {
   try {
@@ -331,7 +361,7 @@ app.put("/api/react", authenticate, async (req, res) => {
   try {
     const { id, reactionType } = req.body;
     console.log("Received ID:", id, "Reaction Type:", reactionType);
-    
+
     if (!id || !reactionType) {
       return res.status(400).send("Id and reaction type cannot be empty");
     }
@@ -360,7 +390,13 @@ app.put("/api/react", authenticate, async (req, res) => {
     const updatedPost = await Posts.findOneAndUpdate(
       { _id: id },
       {
-        $push: { reactions: { user: req.user._id, type: reactionType, date: new Date() } },
+        $push: {
+          reactions: {
+            user: req.user._id,
+            type: reactionType,
+            date: new Date(),
+          },
+        },
       },
       { returnDocument: "after" }
     )
@@ -379,7 +415,8 @@ app.put("/api/remove-reaction", authenticate, async (req, res) => {
   try {
     const { id, reactionType } = req.body;
     const { user } = req;
-    if (!id || !reactionType) return res.status(400).send("Id and reaction type cannot be empty");
+    if (!id || !reactionType)
+      return res.status(400).send("Id and reaction type cannot be empty");
 
     // Ensure the reaction type is valid
     const validReactions = ["like", "love", "haha", "angry", "sad"];
@@ -402,7 +439,6 @@ app.put("/api/remove-reaction", authenticate, async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-
 
 //xu ly save bai viet
 app.put("/api/save", authenticate, async (req, res) => {
@@ -707,14 +743,14 @@ app.get("/api/messages/:conversationId", async (req, res) => {
   try {
     const { conversationId } = req.params;
     if (!conversationId) {
-      return res.status(400).json({ error: 'Conversation ID is required' });
+      return res.status(400).json({ error: "Conversation ID is required" });
     }
-    
+
     const messages = await Message.find({ conversationId });
     res.json(messages);
   } catch (error) {
-    console.error('Error fetching messages:', error);
-    res.status(500).json({ error: 'Failed to fetch messages' });
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ error: "Failed to fetch messages" });
   }
 });
 server.listen(8000, () => {

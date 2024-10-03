@@ -16,13 +16,22 @@ import {
   IconMoodHappy,
   IconMoodSad,
   IconThumbUp,
+  IconAntennaBars1,
+  IconPencil,
+  IconTrash,
+  IconExclamationCircle,
 } from "@tabler/icons-react";
 import { navigations } from "./navigation";
 import { Link, useNavigate } from "react-router-dom";
 import PacmanLoader from "react-spinners/PacmanLoader";
 import PostCommentsModal from "../../pop-up/PostCommentsModal";
 import DarkMode from "../../components/DarkMode";
-
+import like from "../../assets/reaction/like.jpg";
+import love from "../../assets/reaction/love.jpg";
+import haha from "../../assets/reaction/haha.jpg";
+import angry from "../../assets/reaction/angry.jpg";
+import sad from "../../assets/reaction/sad.png";
+import EditPostModal from "../../pop-up/EditPostModal";
 const Home = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
@@ -35,62 +44,75 @@ const Home = () => {
   const [comment, setComment] = useState("");
   const [selectedPost, setSelectedPost] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  //
+  const [isModalOpenEdit, setIsModalOpenEdit] = useState(false);
+
   //lay danh sach nguoi dung ch follow
   const [suggestions, setSuggestions] = useState([]); // New state for suggestions
   //lay danh sach nguoi dung da follow
   const [activeFollowers, setActiveFollowers] = useState([]); // New state for active followers
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [postReactions, setPostReactions] = useState({});
+  const [activePostId, setActivePostId] = useState(null);
+
+  const toggleDropdownPost = (postId) => {
+    setActivePostId((prevId) => (prevId === postId ? null : postId));
+  };
+
+
+
   const toggleDropdown = () => {
-    setDropdownVisible((prev) => !prev); // Update this line
+    setDropdownVisible((prev) => !prev);
   };
   const handleReactionClick = async (id, reactionType) => {
     const currentReaction = postReactions[id]; // Get the current reaction for the specific post
-  
+
     try {
       // Set URLs for API
       const removeUrl = "http://localhost:8000/api/remove-reaction";
       const reactUrl = "http://localhost:8000/api/react";
       const fetchPostUrl = `http://localhost:8000/api/posts/${id}`; // URL to fetch the post
-  
+
       // If the user clicks on the same type of reaction, remove the current reaction
       if (currentReaction === reactionType) {
         // Remove the reaction
         await updateReaction(removeUrl, id, currentReaction); // Call function to remove the reaction
         setPostReactions((prev) => ({ ...prev, [id]: null })); // Update state to remove the reaction
-        
+
         // Fetch the updated post data
         const response = await fetch(fetchPostUrl, {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem("user:token")}`,
+            Authorization: `Bearer ${localStorage.getItem("user:token")}`,
           },
         });
-  
+
         if (!response.ok) {
           const errorMessage = await response.text();
-          console.error("Failed to fetch post after removing reaction:", errorMessage);
+          console.error(
+            "Failed to fetch post after removing reaction:",
+            errorMessage
+          );
           throw new Error("Failed to fetch post after removing reaction");
         }
-  
+
         const updatedPost = await response.json();
-  
+
         // Update data based on the response
         setData((prevData) =>
           prevData.map((post) =>
             post._id === updatedPost._id ? updatedPost : post
           )
         );
-  
       } else {
         // If there is a current reaction, remove that reaction first
         if (currentReaction) {
           await updateReaction(removeUrl, id, currentReaction); // Remove the current reaction
         }
-  
+
         // Set the new reaction in state
         setPostReactions((prev) => ({ ...prev, [id]: reactionType }));
-  
+
         const response = await fetch(reactUrl, {
           method: "PUT",
           headers: {
@@ -99,15 +121,15 @@ const Home = () => {
           },
           body: JSON.stringify({ id, reactionType }),
         });
-  
+
         if (!response.ok) {
           const errorMessage = await response.text();
           console.error("Failed to update post reaction:", errorMessage);
           throw new Error("Failed to update post reaction");
         }
-  
+
         const { updatedPost } = await response.json();
-  
+
         // Update data based on the response
         setData((prevData) =>
           prevData.map((post) =>
@@ -140,15 +162,15 @@ const Home = () => {
   const getReactionIcon = (reactionType) => {
     switch (reactionType) {
       case "like":
-        return <IconThumbUp className="text-blue-500" />;
+        return <img src={like} className="text-blue-500 w-[24px] h-[24px]" />;
       case "love":
-        return <IconMoodHappy className="text-yellow-500" />;
+        return <img src={love} className="text-yellow-500 w-[24px] h-[24px]" />;
       case "haha":
-        return <IconMoodHappy className="text-green-500" />;
+        return <img src={haha} className="text-green-500  w-[24px] h-[24px]" />;
       case "angry":
-        return <IconMoodAngry className="text-red-600" />;
+        return <img src={angry} className="text-red-600  w-[24px] h-[24px]" />;
       case "sad":
-        return <IconMoodSad className="text-purple-500" />;
+        return <img src={sad} className="text-purple-500  w-[24px] h-[24px]" />;
       case "default":
         return <IconThumbUp className="text-black  dark:text-white" />;
     }
@@ -378,6 +400,34 @@ const Home = () => {
       alert(error.message);
     }
   };
+  // Function to handle deleting a post
+  const handleDeletePost = async (postId) => {
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `http://localhost:8000/api/posts/${postId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("user:token")}`,
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Failed to delete post");
+
+        // Update the state to remove the deleted post
+        setData((prevData) => prevData.filter((post) => post._id !== postId));
+        alert("Post deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting post:", error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   return (
     <div className="h-screen  flex overflow-hidden">
@@ -499,28 +549,74 @@ const Home = () => {
 
               return (
                 <div className=" w-[80%] mx-auto mt-8 p-8" key={_id}>
-                  <div
-                    className="border-b flex items-center pb-4 mb-4 cursor-pointer"
-                    onClick={() =>
-                      username === user.username
-                        ? navigate("/profile")
-                        : navigate(`/user/${user.username}`)
-                    }
-                  >
-                    <img
-                      src={user.image || avt}
-                      alt="avt"
-                      className="w-[50px] h-[50px] rounded-full"
-                    />
-                    <div className="ml-4">
-                      <h3 className="text-lg leading-none font-semibold">
-                        {user.username || "Unknown User"}
-                      </h3>
-                      <p className="text-sm font-light">
-                        {user.email || "No Email"}
-                      </p>
+                  <div className="relative border-b flex items-center pb-4 mb-4 cursor-pointer">
+                    {/* Ảnh đại diện và thông tin người dùng */}
+                    <div
+                      onClick={() =>
+                        username === user.username
+                          ? navigate("/profile")
+                          : navigate(`/user/${user.username}`)
+                      }
+                      className="flex items-center w-full"
+                    >
+                      <img
+                        src={user.image || avt}
+                        alt="avt"
+                        className="w-[50px] h-[50px] rounded-full"
+                      />
+                      <div className="ml-4">
+                        <h3 className="text-lg leading-none font-semibold">
+                          {user.username || "Unknown User"}
+                        </h3>
+                        <p className="text-sm font-light">
+                          {user.email || "No Email"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Icon để mở dropdown */}
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                      <div
+                        className="text-gray-400 hover:text-gray-600 cursor-pointer transition-all duration-200"
+                        onClick={() => toggleDropdownPost(_id)}
+                      >
+                        <IconAntennaBars1 /> {/* Icon để mở dropdown */}
+                      </div>
+
+                      {/* Dropdown chứa các icon */}
+                      {activePostId === _id && (
+                        <div className="absolute right-0 bg-white shadow-lg rounded mt-32 p-2">
+                          {username === user.username ? (
+                            <>
+                              {/* Icon sửa */}
+                              <div
+                                className="flex items-center space-x-2 text-gray-400 hover:text-blue-500 cursor-pointer transition-all duration-200"
+                                
+                              >
+                                <IconPencil />
+                                <span>Edit</span>
+                              </div>
+
+                              {/* Icon xóa */}
+                              <div
+                                className="flex items-center space-x-2 text-gray-400 hover:text-red-500 cursor-pointer transition-all duration-200"
+                                onClick={() => handleDeletePost(_id)} // Call delete function
+                              >
+                                <IconTrash /> {/* Icon xóa */}
+                                <span>Xóa</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex items-center space-x-2 text-gray-400 hover:text-blue-500 cursor-pointer transition-all duration-200">
+                              <IconExclamationCircle /> {/* Icon báo cáo */}
+                              <span>Báo cáo</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
+
                   <div className="border-b pb-2 mb-2">
                     <div className="flex mt-4 mb-2 pb-2">
                       <h4 className="mr-4 font-bold">
@@ -620,70 +716,96 @@ const Home = () => {
                       </div>
                       {/* Dropdown Menu for Reactions */}
                       <div
-                        className={`dark:text-white dark:bg-black absolute left-0 z-10 bg-white border rounded shadow-lg transition-opacity duration-200 ease-in-out transform ${
+                        className={`dark:text-white dark:bg-black absolute left-0 z-20 bg-white border rounded-lg shadow-lg transition-all duration-300 ease-in-out transform ${
                           isDropdownVisible
                             ? "opacity-100 translate-y-0"
-                            : "opacity-0 translate-y-1"
+                            : "opacity-0 -translate-y-2"
                         } group-hover:opacity-100 group-hover:translate-y-0`}
                         style={{
-                          top: "-200%",
+                          top: "-150%", // Đặt lại vị trí top để phù hợp với container
+                          left: "50%",
+                          transform: "translateX(-50%)", // Đặt dropdown vào giữa phần tử cha
                           marginBottom: "5px",
-                          whiteSpace: "nowrap",
-                        }} // Thêm whiteSpace để ngăn cách dòng
+                          padding: "10px", // Khoảng cách padding để tạo không gian thoáng giữa các icon
+                        }}
                       >
                         {/* Reaction options */}
-                        <div className="flex space-x-2">
-                          {" "}
-                          {/* Sử dụng flex và space-x để bố trí ngang */}
+                        <div className="relative w-[260px] h-[100px] flex justify-around items-center">
+                          {/* Like Option */}
                           <div
                             onClick={() => {
                               handleReactionClick(_id, "like");
                               setDropdownVisible(false);
                             }}
-                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                            className="flex flex-col items-center p-2 hover:bg-blue-100 cursor-pointer transition-all duration-200 rounded-lg"
                           >
-                            <IconThumbUp className="text-blue-500" />
-                            <span className="ml-2">Like</span>
+                            <img
+                              src={like}
+                              className="text-blue-500 w-[28px] h-[28px] hover:scale-125 transition-all duration-200"
+                              alt="Like"
+                            />
+                            <span className="mt-2 text-sm">Like</span>
                           </div>
+                          {/* Love Option */}
                           <div
                             onClick={() => {
                               handleReactionClick(_id, "love");
                               setDropdownVisible(false);
                             }}
-                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                            className="flex flex-col items-center p-2 hover:bg-red-100 cursor-pointer transition-all duration-200 rounded-lg"
                           >
-                            <IconMoodHappy className="text-yellow-500" />
-                            <span className="ml-2">Love</span>
+                            <img
+                              src={love}
+                              className="text-red-500 w-[28px] h-[28px] hover:scale-125 transition-all duration-200"
+                              alt="Love"
+                            />
+                            <span className="mt-2 text-sm">Love</span>
                           </div>
+                          {/* Haha Option */}
                           <div
                             onClick={() => {
                               handleReactionClick(_id, "haha");
                               setDropdownVisible(false);
                             }}
-                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                            className="flex flex-col items-center p-2 hover:bg-green-100 cursor-pointer transition-all duration-200 rounded-lg"
                           >
-                            <IconMoodHappy className="text-green-500" />
-                            <span className="ml-2">Haha</span>
+                            <img
+                              src={haha}
+                              className="text-green-500 w-[28px] h-[28px] hover:scale-125 transition-all duration-200"
+                              alt="Haha"
+                            />
+
+                            <span className="mt-2 text-sm">Haha</span>
                           </div>
+                          {/* Angry Option */}
                           <div
                             onClick={() => {
                               handleReactionClick(_id, "angry");
                               setDropdownVisible(false);
                             }}
-                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                            className="flex flex-col items-center p-2 hover:bg-red-200 cursor-pointer transition-all duration-200 rounded-lg"
                           >
-                            <IconMoodAngry className="text-red-600" />
-                            <span className="ml-2">Angry</span>
+                            <img
+                              src={angry}
+                              className="text-red-500 w-[28px] h-[28px] hover:scale-125 transition-all duration-200"
+                              alt="Angry"
+                            />
+                            <span className="mt-2 text-sm">Angry</span>
                           </div>
+                          {/* Sad Option */}
                           <div
                             onClick={() => {
                               handleReactionClick(_id, "sad");
                               setDropdownVisible(false);
                             }}
-                            className="flex items-center p-2 hover:bg-gray-200 cursor-pointer"
+                            className="flex flex-col items-center p-2 hover:bg-purple-100 cursor-pointer transition-all duration-200 rounded-lg"
                           >
-                            <IconMoodSad className="text-purple-500" />
-                            <span className="ml-2">Sad</span>
+                            <img
+                              src={sad}
+                              className="text-purple-500 w-[28px] h-[28px] hover:scale-125 transition-all duration-200"
+                              alt="Sad"
+                            />
+                            <span className="mt-2 text-sm">Sad</span>
                           </div>
                         </div>
                       </div>
