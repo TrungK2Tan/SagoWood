@@ -6,6 +6,7 @@ import CreatePost from "../modules/Posts/createpost";
 import Profile from "../modules/Profile";
 import People from "../modules/People";
 import Message from "../modules/Message";
+import SuggestedUsersPage from "../pop-up/SuggestedUsersPage";
 const PrivateRoute = ({ children }) => {
   const isUserLoggedIn = window.localStorage.getItem("user:token") || false;
   const isFormPages = window.location.pathname.includes("account");
@@ -62,6 +63,12 @@ const Routes = () => {
       name: "message",
       path: "/direct",
       Component: <Message />,
+    },
+    {
+      id: 8,
+      name: "suggestion",
+      path: "/suggestion",
+      Component: <SuggestedUsersPage />,
     },
   ];
   return (

@@ -28,6 +28,7 @@ const Message = () => {
   useEffect(() => {
     const userDetails = JSON.parse(localStorage.getItem("user:detail"));
     if (userDetails) {
+      console.log("User Details: ", userDetails); // Log user details
       setUser(userDetails);
     }
 
@@ -241,78 +242,88 @@ const Message = () => {
       {/* Chat Section */}
       <div className="w-[70%] flex flex-col flex-1 h-full">
         {/* Chat Header */}
-        <div className="w-full h-[80px] px-6 flex items-center justify-between shadow">
-          <div
-            className="flex items-center cursor-pointer"
-            onClick={() => navigate(`/user/${selectedUser?.username}`)}
-          >
-            <img
-              src={selectedUser?.image || avt}
-              alt="User Avatar"
-              className="w-[50px] h-[50px] rounded-full"
-            />
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold">
-                {selectedUser?.username || "Select a user"}
-              </h3>
-              <p className="text-sm text-gray-500">
-                {selectedUser ? "Online" : ""}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4 text-gray-500">
-            <IconPhoneCall />
-          </div>
-        </div>
-
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {messages.map((msg, index) => (
+        {selectedUser ? (
+          <div className="w-full h-[80px] px-6 flex items-center justify-between shadow">
             <div
-              key={index}
-              className={`flex ${
-                msg.senderId === user._id ? "justify-end" : "justify-start"
-              } mb-4`}
+              className="flex items-center cursor-pointer"
+              onClick={() => navigate(`/user/${selectedUser?.username}`)}
             >
-              <div
-                className={`max-w-[60%] p-4 rounded-lg ${
-                  msg.senderId === user._id
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200 text-gray-800"
-                }`}
-              >
-                {msg.message}
+              <img
+                src={selectedUser?.image || avt}
+                alt="User Avatar"
+                className="w-[50px] h-[50px] rounded-full"
+              />
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold">
+                  {selectedUser.username}
+                </h3>
+                <p className="text-sm text-gray-500">Online</p>
               </div>
             </div>
-          ))}
-        </div>
+            <div className="flex items-center space-x-4 text-gray-500">
+              <IconPhoneCall />
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-[80px] shadow">
+            <h3 className="text-lg font-semibold">
+              Select a user to start chatting
+            </h3>
+          </div>
+        )}
+
+        {/* Chat Messages */}
+        {selectedUser && (
+          <div className="flex-1 overflow-y-auto p-6">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`flex ${
+                  msg.senderId === user._id ? "justify-end" : "justify-start"
+                } mb-4`}
+              >
+                <div
+                  className={`max-w-[60%] p-4 rounded-lg ${
+                    msg.senderId === user._id
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-200 text-gray-800"
+                  }`}
+                >
+                  {msg.message}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Message Input */}
-        <div className="w-full px-6 py-4 flex items-center border-t">
-          <button
-            onClick={() => setShowEmojiPicker((prev) => !prev)}
-            className="mr-4"
-          >
-            🙂
-          </button>
-          {showEmojiPicker && (
-            <div className="absolute bottom-16 left-12 z-50">
-              <Picker onEmojiClick={onEmojiClick} />
-            </div>
-          )}
-          <Input
-            value={message}
-            onChange={handleInputChange}
-            placeholder="Type a message..."
-            className="flex-1"
-          />
-          <button
-            onClick={handleSendMessage}
-            className="ml-4 bg-green-500 text-white px-6 py-2 rounded-lg"
-          >
-            <IconBrandTelegram />
-          </button>
-        </div>
+        {selectedUser && (
+          <div className="w-full px-6 py-4 flex items-center border-t">
+            <button
+              onClick={() => setShowEmojiPicker((prev) => !prev)}
+              className="mr-4"
+            >
+              🙂
+            </button>
+            {showEmojiPicker && (
+              <div className="absolute bottom-16 left-12 z-50">
+                <Picker onEmojiClick={onEmojiClick} />
+              </div>
+            )}
+            <Input
+              value={message}
+              onChange={handleInputChange}
+              placeholder="Type a message..."
+              className="flex-1"
+            />
+            <button
+              onClick={handleSendMessage}
+              className="ml-4 bg-green-500 text-white px-6 py-2 rounded-lg"
+            >
+              <IconBrandTelegram />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

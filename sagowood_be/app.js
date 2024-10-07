@@ -74,37 +74,119 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+// Dummy data for demonstration
+const countries = [
+  { id: 1, name: "Vietnam" },
+  { id: 2, name: "USA" },
+  { id: 3, name: "India" },
+];
 
+const cities = {
+  Vietnam: [
+    { id: 1, name: "Hanoi" },
+    { id: 2, name: "Ho Chi Minh City" },
+  ],
+  USA: [
+    { id: 3, name: "New York" },
+    { id: 4, name: "Los Angeles" },
+  ],
+  India: [
+    { id: 5, name: "Delhi" },
+    { id: 6, name: "Mumbai" },
+  ],
+};
+
+const districts = {
+  "Hanoi": [
+    { id: 1, name: "Hoan Kiem" },
+    { id: 2, name: "Tay Ho" },
+  ],
+  "Ho Chi Minh City": [
+    { id: 3, name: "District 1" },
+    { id: 4, name: "District 2" },
+  ],
+  "New York": [
+    { id: 5, name: "Manhattan" },
+    { id: 6, name: "Brooklyn" },
+  ],
+  "Los Angeles": [
+    { id: 7, name: "Hollywood" },
+    { id: 8, name: "Beverly Hills" },
+  ],
+  "Delhi": [
+    { id: 9, name: "Central Delhi" },
+    { id: 10, name: "South Delhi" },
+  ],
+  "Mumbai": [
+    { id: 11, name: "South Mumbai" },
+    { id: 12, name: "Andheri" },
+  ],
+};
 app.get("/", (req, res) => {
   res.send("Hello world");
 });
+// Endpoint to fetch countries
+app.get("/api/countries", (req, res) => {
+  res.json(countries);
+});
+
+// Endpoint to fetch cities by country
+app.get("/api/cities", (req, res) => {
+  const { country } = req.query;
+  const cityList = cities[country] || [];
+  res.json(cityList);
+});
+
+// Endpoint to fetch districts by city
+app.get("/api/districts", (req, res) => {
+  const { city } = req.query;
+  const districtList = districts[city] || [];
+  res.json(districtList);
+});
 // Dang Ky
+
 app.post("/api/register", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
-    if (!username || !email || !password) {
+    const { username, email, password, phone, dateOfBirth, country, city, district } = req.body; 
+    if (!username || !email || !password || !phone || !dateOfBirth || !country || !city || !district) {
       return res.status(400).send("Cannot be empty");
     }
 
-    const isExist = await User.findOne({ email });
-    if (isExist) {
-      return res.status(400).send("User already exists");
+    // Check if email or phone already exists
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      return res.status(400).send("Email is already in use");
+    }
+
+    const phoneExists = await User.findOne({ phone });
+    if (phoneExists) {
+      return res.status(400).send("Phone number is already in use");
     }
 
     const hashedPassword = await bcryptjs.hash(password, 10);
+    
+    // Combine country, city, and district into a single address
+    const address = `${country}, ${city}, ${district}`;
+    
     const user = new User({
       username,
       email,
       password: hashedPassword,
-      image: "",
+      phone, 
+      dateOfBirth,
+      address, 
+      image: "", 
+      createdAt: new Date() // Add createdAt field
     });
+    
     await user.save();
-
     return res.status(200).send("Successfully registered");
   } catch (error) {
+    console.error(error);
     return res.status(500).send("Server Error");
   }
 });
+
 // Dang Nhap
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;

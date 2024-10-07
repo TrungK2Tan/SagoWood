@@ -594,7 +594,7 @@ const Home = () => {
                                 
                               >
                                 <IconPencil />
-                                <span>Edit</span>
+                                <span>Sửa</span>
                               </div>
 
                               {/* Icon xóa */}
@@ -892,7 +892,7 @@ const Home = () => {
         <div className="w-full max-w-[400px]">
           <div className="flex flex-row justify-between">
             <h3 className="text-lg font-semibold mb-4">Suggestions for you</h3>
-            <a className="text-lg font-semibold mb-4 cursor-pointer">See All</a>
+            <div  onClick={() => navigate('/suggestion')} className="text-lg font-semibold mb-4 cursor-pointer">See All</div>
           </div>
           {suggestions.length === 0 ? (
             <p className="text-gray-500">No suggestions available.</p>

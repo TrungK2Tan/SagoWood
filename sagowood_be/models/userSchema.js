@@ -17,7 +17,24 @@ const userSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-      }, // Ensure image is a string
+    },
+    phone: {  // Số điện thoại
+        type: String,
+        required: true,
+        unique: true
+    },
+    createdAt: {  // Ngày tạo tài khoản
+        type: Date,
+        default: Date.now
+    },
+    dateOfBirth: {  // Ngày sinh
+        type: Date,
+        required: true  // Đảm bảo trường này là bắt buộc
+    },
+    address: {  // Địa chỉ
+        type: String,
+        required: true  // Đảm bảo trường này là bắt buộc
+    }
 });
 
 // Change model name to "User" (capitalized)

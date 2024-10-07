@@ -6,6 +6,7 @@ import {
   IconSettings,
   IconUser,
 } from "@tabler/icons-react";
+import DropdownMenu from "../../pop-up/DropdownMenu";
 
 export const navigations = [
   {
@@ -43,7 +44,7 @@ export const navigations = [
   {
     id: 6,
     name: "Settings",
-    icon: <IconSettings />,
-    url: "/",
+    icon: <DropdownMenu />, // Use the DropdownMenu component here
+    url: "/", // This can be left or modified as needed
   },
 ];
